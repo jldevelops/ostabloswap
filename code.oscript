@@ -1,0 +1,137 @@
+{
+    "doc_url": "https://raw.githubusercontent.com/jldevelops/ostabloswap/main/description.json",
+    "getters": "{
+
+        $get_growth_factor = ($curve) => {
+            $interest_rate = var[$curve]['interest_rate'];
+            $term = (timestamp - var[$curve]['rate_update_ts']) / (360 * 24 * 3600); // in years
+            $growth_factor = var[$curve]['growth_factor'] * (1 + $interest_rate)^$term;
+            $growth_factor
+        };
+
+        $pool_addr = => params.pool;
+        $asset0_stable_addr = => params.stable0;
+        $asset1_stable_addr = => params.stable1;
+
+        $get_stable0_bal = () => {
+            $curve = definition[$asset0_stable_addr()][1].params.curve_aa;
+            $gr = $get_growth_factor($curve);
+            return balance[$pool_addr()][var[$curve]['asset2']]*$gr;
+        };
+        $get_stable1_bal = () => {
+            $curve = definition[$asset1_stable_addr()][1].params.curve_aa;
+            $gr = $get_growth_factor($curve);
+            return balance[$pool_addr()][var[$curve]['asset2']]*$gr;
+        };
+
+    }",
+    "init": "{
+        if(trigger.output[[asset!=base]].asset != 'none'){
+            $asset = trigger.output[[asset!=base]].asset;
+            if($asset and $asset == 'ambiguous') 
+                bounce('Only 1 asset per tx');
+        }
+        else
+            bounce('no stable token');
+        $oswapBaseAddr = 'GS23D3GQNNMNJ5TL4Z5PINZ5626WASMA';
+        $curveBaseAddr = '3DGWRKKWWSC6SV4ZQDWEHYFRYB4TGPKX';
+        $defAddr = definition[$pool_addr()][1];
+        if($defAddr.base_aa != $oswapBaseAddr)
+            bounce('not a oswap pool');
+        $asset0def = asset[$defAddr.params.asset0].definer_address;
+        $asset1def = asset[$defAddr.params.asset1].definer_address;
+        $asset0isI = $asset0def AND is_aa($asset0def) AND definition[$asset0def][1].base_aa == $curveBaseAddr;
+        $asset1isI = $asset1def AND is_aa($asset1def) AND definition[$asset1def][1].base_aa == $curveBaseAddr;
+        if(!$asset0isI OR !$asset1isI)
+            bounce('both pool assets must be interest tokens');
+    }",
+        "messages": {
+            "cases": [
+                {
+                    "if": "{trigger.address == trigger.initial_address}",
+                    "init": "{
+                        $asset0stable = var[$asset0_stable_addr()]['asset'] == $asset;
+                        $asset1stable = var[$asset1_stable_addr()]['asset'] == $asset;
+                        if(!$asset0stable AND !$asset1stable)
+                            bounce('wrong stable token');
+                        if($asset0stable)
+                            $sendaddr = $asset0_stable_addr();
+                        else
+                            $sendaddr = $asset1_stable_addr();
+                    }",
+                    "messages": [
+                        {
+                            "app": "payment",
+                            "payload": {
+                                "asset": "{$asset}",
+                                "outputs": [
+                                    {
+                                        "address": "{$sendaddr}",
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "app": "state",
+                            state : "{
+                                if($asset0stable)
+                                    var['sendto'] = $asset1_stable_addr();
+                                else
+                                    var['sendto'] = $asset0_stable_addr();
+                            }"
+                        }
+                    ]
+                },
+                {
+                    "if": "{trigger.address == $asset0_stable_addr() OR trigger.address == $asset1_stable_addr()}",
+                    "messages": [
+                        {
+                            "app": "data",
+                            "payload": {
+                                "to": "{this_address}"
+                            }
+                        },
+                        {
+                            "app": "payment",
+                            "payload": {
+                                "asset": "{$asset}",
+                                "outputs": [
+                                    {
+                                        "address": "{$pool_addr()}",
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "if": "{trigger.address == $pool_addr()}",
+                    "messages": [
+                        {
+                            "app": "payment",
+                            "payload": {
+                                "asset": "{$asset}",
+                                "outputs": [
+                                    {
+                                        "address": "{var['sendto']}",
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "app": "data",
+                            "payload": {
+                                "to": "{trigger.initial_address}"
+                            }
+                        },
+                        {
+                            "app": "state",
+                            state : "{
+                                var['sendto'] = false;
+                            }"
+                        }
+                    ]
+                }
+        ]
+    }
+}
