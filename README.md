@@ -4,7 +4,7 @@ Wrapper for ostable i-tokens oswap pools
 Deploy an AA with following parameters:
 ```
 {
-    base_aa: "DZ277J5FQMZI2HXNK7EVRHLPJCIQD35H",
+    base_aa: "XUP6AKBIBRWJQUNUJNQGVYTKEE6OQTNJ",
     params: {
         pool: "oswap pool address",
         stable0: "asset0 stable address",
@@ -13,4 +13,4 @@ Deploy an AA with following parameters:
 }
 ```
 
-Will use underlying i token pool to swap one stable token for another
+Will use underlying i token pool to swap one stable token for another costing 4KB each swap
