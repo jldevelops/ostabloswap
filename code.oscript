@@ -1,5 +1,5 @@
 {
-    "doc_url": "https://raw.githubusercontent.com/jldevelops/ostabloswap/main/description.json",
+    "doc_url": "https://raw.githubusercontent.com/jldevelops/ostabloswap/main/desc.json",
     "getters": "{
 
         $get_growth_factor = ($curve) => {
@@ -47,6 +47,39 @@
     }",
         "messages": {
             "cases": [
+                {
+                    "if": "{var['final']}",
+                    "messages": [
+                        {
+                            "app": "payment",
+                            "payload": {
+                                "asset": "{$asset}",
+                                "outputs": [
+                                    {
+                                        "address": "{trigger.initial_address}",
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "app": "payment",
+                            "payload": {
+                                "asset": 'base',
+                                "outputs": [
+                                    {
+                                        "address": "{trigger.initial_address}",
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "app": "state",
+                            state : "{
+                                var['final'] = false;
+                            }"
+                        }
+                    ]
+                },
                 {
                     "if": "{trigger.address == trigger.initial_address}",
                     "init": "{
@@ -119,15 +152,10 @@
                             }
                         },
                         {
-                            "app": "data",
-                            "payload": {
-                                "to": "{trigger.initial_address}"
-                            }
-                        },
-                        {
                             "app": "state",
                             state : "{
                                 var['sendto'] = false;
+                                var['final'] = true;
                             }"
                         }
                     ]
