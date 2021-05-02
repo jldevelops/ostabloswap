@@ -105,6 +105,17 @@
                             }
                         },
                         {
+                            "app": "payment",
+                            "payload": {
+                                "asset": 'base',
+                                "outputs": [
+                                    {
+                                        "address": "{$sendaddr}",amount:1000
+                                    }
+                                ]
+                            }
+                        },
+                        {
                             "app": "state",
                             state : "{
                                 if($asset0stable)
@@ -134,6 +145,17 @@
                                     }
                                 ]
                             }
+                        },
+                        {
+                            "app": "payment",
+                            "payload": {
+                                "asset": 'base',
+                                "outputs": [
+                                    {
+                                        "address": "{$pool_addr()}",amount:1000
+                                    }
+                                ]
+                            }
                         }
                     ]
                 },
@@ -147,6 +169,17 @@
                                 "outputs": [
                                     {
                                         "address": "{var['sendto']}",
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "app": "payment",
+                            "payload": {
+                                "asset": 'base',
+                                "outputs": [
+                                    {
+                                        "address": "{var['sendto']}",amount:1000
                                     }
                                 ]
                             }
